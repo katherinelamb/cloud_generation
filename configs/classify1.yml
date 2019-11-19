@@ -1,0 +1,7 @@
+crop_size: 128
+batch_size: 4
+num_epochs: 50
+learning_rate: 0.001
+num_imgs: 128
+regularize: 0
+train_split: 0.8
