@@ -206,7 +206,7 @@ def long_slice(line_id, img, label, outdir, csv_path, sliceHeight, sliceWidth):
             working_slice.thumbnail((128, 128), Image.ANTIALIAS)
             working_slice.save(out_path)
             with open(csv_path, 'a') as file:
-                file.write('{}, {}\n'.format(filename, label))
+                file.write('{},{}\n'.format(filename, label))
             index += 1
             upper += sliceHeight # Increment the horizontal position
         left += sliceWidth # Increment the vertical position
@@ -250,17 +250,17 @@ train_fns = sorted(glob(TRAIN_PATH + '*.jpg'))
 
 def main():
     # split column
-    split_df = train_df["Image_Label"].str.split("_", n = 1, expand = True)
+    split_df = test_df["Image_Label"].str.split("_", n = 1, expand = True)
     # add new columns to train_df
-    train_df['Image'] = split_df[0]
-    train_df['Label'] = split_df[1]
-    im_df = train_df.fillna(-1)
+    test_df['Image'] = split_df[0]
+    test_df['Label'] = split_df[1]
+    im_df = test_df.fillna(-1)
 
-    print("Generating Train Crops")
+    print("Generating Test Crops")
     with open(TRAIN_CSV_CROP_PATH, 'w') as file:
-        file.write('Image, Label\n')
-    for line_id, row in tqdm.tqdm(train_df.iterrows(), total=len(train_df)):
-        crop_image_with_mask(line_id, im_df, TRAIN_PATH, TRAIN_CROP_PATH, TRAIN_CSV_CROP_PATH)
+        file.write('Image,Label\n')
+    for line_id, row in tqdm.tqdm(test_df.iterrows(), total=len(test_df)):
+        crop_image_with_mask(line_id, im_df, TEST_PATH, TEST_CROP_PATH, TEST_CSV_CROP_PATH)
         # fig, ax = plt.subplots(figsize=(6, 4))
         # ax.axis('off')
         # plt.title(row['Label'])
