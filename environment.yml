@@ -1,4 +1,4 @@
-name: cs235
+name: cs236
 channels:
   - oxfordcontrol
   - defaults
@@ -51,4 +51,3 @@ dependencies:
     - tqdm==4.36.1
     - urllib3==1.25.6
 prefix: /anaconda3/envs/cs235
-
