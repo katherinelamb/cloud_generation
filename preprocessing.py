@@ -261,7 +261,6 @@ def main():
         file.write('Image, Label\n')
     for line_id, row in tqdm.tqdm(train_df.iterrows(), total=len(train_df)):
         crop_image_with_mask(line_id, TRAIN_CROP_PATH, TRAIN_CSV_CROP_PATH)
-        if line_id > 10: break
         # fig, ax = plt.subplots(figsize=(6, 4))
         # ax.axis('off')
         # plt.title(row['Label'])
