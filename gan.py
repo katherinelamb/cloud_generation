@@ -13,6 +13,7 @@ from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 
 import sys
+import os
 
 import numpy as np
 
@@ -20,9 +21,13 @@ class GAN():
     def __init__(self):
         self.img_rows = 128
         self.img_cols = 128
-        self.channels = 1
+        self.channels = 3
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.latent_dim = 100
+
+        self.train_dir = 'inputs/crops/train_crops'
+        self.test_dir = 'inputs/crops/test_crops'
+        self.n_train = 220
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -94,7 +99,15 @@ class GAN():
     def train(self, epochs, batch_size=128, sample_interval=50):
 
         # Load the dataset
-        (X_train, _), (_, _) = mnist.load_data()
+        X_train = np.empty(self.n_train, self.img_shape, self.channels)
+        train_entries = os.listdir(self.train_dir)
+        for i, entry in enumerate(train_entries):
+            img = Image.open(entry)
+            #img = Image.open(entry).convert('L')
+            arr = np.array(img)
+            X_train[i] = arr
+
+        #(X_train, _), (_, _) = mnist.load_data()
 
         # Rescale -1 to 1
         X_train = X_train / 127.5 - 1.
