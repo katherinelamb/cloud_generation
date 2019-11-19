@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from classifier_model import classifier
 from hparam_manager import load_hparam_space, parse_hparams
+from tensorboard.plugins.hparams import api as hp
 
 def parse_function(filename, label):
     image_string = tf.io.read_file(filename)
@@ -55,7 +56,7 @@ def split_train_val(df, train_split, num_imgs):
 
     return train_idxs, val_idxs
 
-def train(model: tf.keras.Model, data_csv: str, data_root: str, hparams: dict, hp_space: dict):
+def train(model: tf.keras.Model, data_csv: str, data_root: str, hparams: dict, hp_space: dict, run_name: str):
     train_split = hparams[hp_space['train_split']]
     num_imgs = hparams[hp_space['num_imgs']]
     num_epochs = hparams[hp_space['num_epochs']]
@@ -96,7 +97,7 @@ def train(model: tf.keras.Model, data_csv: str, data_root: str, hparams: dict, h
 
     print("Num train: {}, num val: {}".format(num_train, num_val))
 
-    # log_dir = './logs/{}'.format(run_name)
+    log_dir = './logs/{}'.format(run_name)
 
     train_history = model.fit(
         train_dataset,
@@ -104,16 +105,16 @@ def train(model: tf.keras.Model, data_csv: str, data_root: str, hparams: dict, h
         steps_per_epoch=num_train // batch_size,
         validation_steps=num_val // batch_size,
         validation_data=val_dataset,
-        # callbacks=[
-        #     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5),
-        #     tf.keras.callbacks.TensorBoard(
-        #         log_dir=log_dir),
-        #     tf.keras.callbacks.ModelCheckpoint(
-        #         filepath="experiments/{}/".format(run_name) +
-        #         "best_model.hdf5",
-        #         save_best_only=True,
-        #         save_weights_only=False),
-        #     hp.KerasCallback(log_dir, hparams)]
+        callbacks=[
+            tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5),
+            tf.keras.callbacks.TensorBoard(
+                log_dir=log_dir),
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath="experiments/{}/".format(run_name) +
+                "best_model.hdf5",
+                save_best_only=True,
+                save_weights_only=False),
+            hp.KerasCallback(log_dir, hparams)]
         )
 
 def main():
@@ -151,10 +152,10 @@ def main():
     learning_rate = hparams[hp_space['learning_rate']]
     regularize = hparams[hp_space['regularize']]
 
-    # run_name = "{}_{}_{}".format(
-    #     model_name,
-    #     config_yaml[config_yaml.rfind('/') + 1:config_yaml.find('.yaml')],
-    #     datetime.now(pytz.timezone('US/Pacific')).strftime("%Y-%m-%d_%H%M%S"))
+    run_name = "{}_{}_{}".format(
+        'CNN',
+        config_yaml[config_yaml.rfind('/') + 1:config_yaml.find('.yaml')],
+        datetime.now(pytz.timezone('US/Pacific')).strftime("%Y-%m-%d_%H%M%S"))
 
     model = classifier(input_size=(crop_size, crop_size, 3))
 
@@ -162,16 +163,15 @@ def main():
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy', 'sparse_categorical_accuracy'])
 
-    # experiment_dir = "experiments/{}/".format(run_name)
-    # if not os.path.exists(experiment_dir):
-    #     os.mkdir(experiment_dir)
+    experiment_dir = "experiments/{}/".format(run_name)
+    os.makedirs(experiment_dir, exist_ok=True)
 
     # Data config
     if csv_file == '' or data_root == '':
         raise FileNotFoundError(
             "Need to specify csv filepath and data root folder!")
 
-    train(model, csv_file, data_root, hparams, hp_space)
+    train(model, csv_file, data_root, hparams, hp_space, run_name)
 
 if __name__ == '__main__':
     main()
