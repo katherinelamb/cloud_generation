@@ -203,6 +203,7 @@ def long_slice(line_id, img, label, outdir, csv_path, sliceHeight, sliceWidth):
             # Save your new cropped image.
             filename = '{}_{}.jpg'.format(line_id, index)
             out_path = os.path.join(outdir, filename)
+            working_slice.thumbnail((128, 128), Image.ANTIALIAS)
             working_slice.save(out_path)
             with open(csv_path, 'a') as file:
                 file.write('{}, {}\n'.format(filename, label))
@@ -211,9 +212,7 @@ def long_slice(line_id, img, label, outdir, csv_path, sliceHeight, sliceWidth):
         left += sliceWidth # Increment the vertical position
         upper = (imageHeight - num_divs_height * sliceHeight) // 2
 
-def crop_image_with_mask(line_id, outdir, csv_path):
-    im_df = train_df.fillna('-1')
-
+def crop_image_with_mask(line_id, im_df, img_path, outdir, csv_path):
     # get segmentation mask
     np_mask = get_mask(line_id).T
     mask = np.where(np_mask == 1)
@@ -221,7 +220,7 @@ def crop_image_with_mask(line_id, outdir, csv_path):
     bbox = np.min(mask[0]), np.min(mask[1]), np.max(mask[0]), np.max(mask[1])
 
     # open the image
-    image = Image.open(TRAIN_PATH + im_df.loc[line_id]['Image']).crop(bbox)
+    image = Image.open(img_path + im_df.loc[line_id]['Image']).crop(bbox)
 
     width, height = image.size
     new_width = new_height = 512
@@ -255,12 +254,13 @@ def main():
     # add new columns to train_df
     train_df['Image'] = split_df[0]
     train_df['Label'] = split_df[1]
+    im_df = train_df.fillna(-1)
 
     print("Generating Train Crops")
     with open(TRAIN_CSV_CROP_PATH, 'w') as file:
         file.write('Image, Label\n')
     for line_id, row in tqdm.tqdm(train_df.iterrows(), total=len(train_df)):
-        crop_image_with_mask(line_id, TRAIN_CROP_PATH, TRAIN_CSV_CROP_PATH)
+        crop_image_with_mask(line_id, im_df, TRAIN_PATH, TRAIN_CROP_PATH, TRAIN_CSV_CROP_PATH)
         # fig, ax = plt.subplots(figsize=(6, 4))
         # ax.axis('off')
         # plt.title(row['Label'])
