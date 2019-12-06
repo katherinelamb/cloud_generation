@@ -255,8 +255,8 @@ def main():
     print("Generating Test Crops")
     with open(TRAIN_CSV_CROP_PATH, 'w') as file:
         file.write('Image,Label\n')
-    for line_id, row in tqdm.tqdm(test_df.iterrows(), total=len(test_df)):
-        crop_image_with_mask(line_id, im_df, TEST_PATH, TEST_CROP_PATH, TEST_CSV_CROP_PATH)
+    for line_id, row in tqdm.tqdm(train_df.iterrows(), total=len(train_df)):
+        crop_image_with_mask(line_id, im_df, TRAIN_PATH, TRAIN_CROP_PATH, TRAIN_CSV_CROP_PATH)
         # fig, ax = plt.subplots(figsize=(6, 4))
         # ax.axis('off')
         # plt.title(row['Label'])
