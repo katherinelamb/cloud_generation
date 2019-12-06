@@ -112,7 +112,9 @@ class GAN():
             if cnt == self.n_train: break
             label = train_df.iloc[i]['Label']
             if label != self.label: continue
-            img = Image.open(os.path.join(self.train_dir, train_df.iloc[i]['Image']))
+            img_path = os.path.join(self.train_dir, train_df.iloc[i]['Image'])
+            if !os.path.exists(img_path): continue
+            img = Image.open(img_path)
             arr = np.array(img)
             X_train[cnt] = arr
             cnt += 1
