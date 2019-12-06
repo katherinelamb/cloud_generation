@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 import sys
 import os
+import pandas as pd
 
 import numpy as np
 
@@ -26,9 +27,11 @@ class GAN():
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.latent_dim = 100
 
-        self.train_dir = 'inputs/crops/train_crops'
-        self.test_dir = 'inputs/crops/test_crops'
+        BASE_DIR = os.path.dirname((os.path.dirname(__file__)))
+        self.train_csv = os.path.join(BASE_DIR, 'inputs/crops/train_crops.csv')
+        self.train_dir = os.path.join(BASE_DIR, 'inputs/crops/train_crops')
         self.n_train = 4000
+        self.label = 'Fish'
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -101,15 +104,12 @@ class GAN():
 
         # Load the dataset
         X_train = np.empty((self.n_train, self.img_shape[0], self.img_shape[1], self.channels))
-        train_entries = os.listdir(self.train_dir)
-        BASE_DIR = os.path.dirname((os.path.dirname(__file__)))
-        CROP_DIR = os.path.join(BASE_DIR, 'inputs/crops')
-        TRAIN_CROP_PATH = os.path.join(CROP_DIR, 'train_crops/')
-        for i, entry in enumerate(train_entries):
-            if entry == '.DS_Store': continue
+        train_df = pd.read_csv(self.train_csv, skipinitialspace=True)
+        for i in range(len(train_df)):
             if i == self.n_train: break
-            img = Image.open(os.path.join(TRAIN_CROP_PATH, entry))
-            #img = Image.open(entry).convert('L')
+            label = train_df.iloc[i]['Label']
+            if label != self.label: continue
+            img = Image.open(os.path.join(self.train_dir, train_df.iloc[i]['Image']))
             arr = np.array(img)
             X_train[i] = arr
 
@@ -162,17 +162,17 @@ class GAN():
         noise = np.random.normal(0, 1, (r * c, self.latent_dim))
         gen_imgs = self.generator.predict(noise)
 
-        # Rescale images 0 - 1
+        # Rescale images 0 - 255
         gen_imgs = 0.5 * gen_imgs + 0.5
 
         fig, axs = plt.subplots(r, c)
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0])
+                axs[i,j].imshow(gen_imgs[cnt])
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images/%d.png" % epoch)
+        fig.savefig("images/{}_{}.png".format(label, epoch))
         plt.close()
 
 if __name__ == '__main__':
