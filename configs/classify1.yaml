@@ -2,6 +2,6 @@ crop_size: 128
 batch_size: 64
 num_epochs: 200
 learning_rate: 0.001
-num_imgs: 1024
+num_imgs: -1
 regularize: 0
 train_split: 0.8
