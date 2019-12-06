@@ -2,13 +2,14 @@
 
 from __future__ import print_function, division
 
-from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout
-from keras.layers import BatchNormalization, Activation, ZeroPadding2D
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.convolutional import UpSampling2D, Conv2D
-from keras.models import Sequential, Model
-from keras.optimizers import Adam
+# from keras.datasets import mnist
+from tensorflow.keras.layers import Input, Dense, Reshape, Flatten, Dropout
+from tensorflow.keras.layers import BatchNormalization, Activation, ZeroPadding2D
+from tensorflow.keras.layers import LeakyReLU
+from tensorflow.keras.layers import UpSampling2D, Conv2D
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.optimizers import Adam
+from PIL import Image
 
 import matplotlib.pyplot as plt
 
@@ -27,7 +28,7 @@ class GAN():
 
         self.train_dir = 'inputs/crops/train_crops'
         self.test_dir = 'inputs/crops/test_crops'
-        self.n_train = 220
+        self.n_train = 4000
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -99,19 +100,22 @@ class GAN():
     def train(self, epochs, batch_size=128, sample_interval=50):
 
         # Load the dataset
-        X_train = np.empty(self.n_train, self.img_shape, self.channels)
+        X_train = np.empty((self.n_train, self.img_shape[0], self.img_shape[1], self.channels))
         train_entries = os.listdir(self.train_dir)
+        BASE_DIR = os.path.dirname((os.path.dirname(__file__)))
+        CROP_DIR = os.path.join(BASE_DIR, 'inputs/crops')
+        TRAIN_CROP_PATH = os.path.join(CROP_DIR, 'train_crops/')
         for i, entry in enumerate(train_entries):
-            img = Image.open(entry)
+            if entry == '.DS_Store': continue
+            if i == self.n_train: break
+            img = Image.open(os.path.join(TRAIN_CROP_PATH, entry))
             #img = Image.open(entry).convert('L')
             arr = np.array(img)
             X_train[i] = arr
 
-        #(X_train, _), (_, _) = mnist.load_data()
-
         # Rescale -1 to 1
         X_train = X_train / 127.5 - 1.
-        X_train = np.expand_dims(X_train, axis=3)
+        # X_train = np.expand_dims(X_train, axis=3)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -165,13 +169,14 @@ class GAN():
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                axs[i,j].imshow(gen_imgs[cnt, :,:,0])
                 axs[i,j].axis('off')
                 cnt += 1
         fig.savefig("images/%d.png" % epoch)
         plt.close()
 
-
 if __name__ == '__main__':
+    os.makedirs('images/', exist_ok=True)
     gan = GAN()
+    exit()
     gan.train(epochs=30000, batch_size=32, sample_interval=200)

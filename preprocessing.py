@@ -234,15 +234,11 @@ CROP_DIR = os.path.join(BASE_DIR, 'inputs/crops')
 
 # set paths to train and test image datasets
 TRAIN_PATH = os.path.join(DATA_DIR, 'train_images/')
-TEST_PATH = os.path.join(DATA_DIR, 'test_images/')
 TRAIN_CSV_PATH = os.path.join(DATA_DIR, 'train.csv')
 
 TRAIN_CROP_PATH = os.path.join(CROP_DIR, 'train_crops/')
-TEST_CROP_PATH = os.path.join(CROP_DIR, 'test_crops/')
 TRAIN_CSV_CROP_PATH = os.path.join(CROP_DIR, 'train_crops.csv')
-TEST_CSV_CROP_PATH = os.path.join(CROP_DIR, 'test_crops.csv')
 os.makedirs(TRAIN_CROP_PATH, exist_ok=True)
-os.makedirs(TEST_CROP_PATH, exist_ok=True)
 
 # load dataframe with train labels
 train_df = pd.read_csv(TRAIN_CSV_PATH)
@@ -250,13 +246,14 @@ train_fns = sorted(glob(TRAIN_PATH + '*.jpg'))
 
 def main():
     # split column
-    split_df = test_df["Image_Label"].str.split("_", n = 1, expand = True)
+    split_df = train_df["Image_Label"].str.split("_", n = 1, expand = True)
     # add new columns to train_df
-    test_df['Image'] = split_df[0]
-    test_df['Label'] = split_df[1]
-    im_df = test_df.fillna(-1)
+    train_df['Image'] = split_df[0]
+    train_df['Label'] = split_df[1]
+    im_df = train_df.fillna(-1)
 
     print("Generating Test Crops")
+    exit()
     with open(TRAIN_CSV_CROP_PATH, 'w') as file:
         file.write('Image,Label\n')
     for line_id, row in tqdm.tqdm(test_df.iterrows(), total=len(test_df)):
