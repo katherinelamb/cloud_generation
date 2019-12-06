@@ -178,5 +178,4 @@ class GAN():
 if __name__ == '__main__':
     os.makedirs('images/', exist_ok=True)
     gan = GAN()
-    exit()
     gan.train(epochs=30000, batch_size=32, sample_interval=200)

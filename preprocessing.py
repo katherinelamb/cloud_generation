@@ -253,7 +253,6 @@ def main():
     im_df = train_df.fillna(-1)
 
     print("Generating Test Crops")
-    exit()
     with open(TRAIN_CSV_CROP_PATH, 'w') as file:
         file.write('Image,Label\n')
     for line_id, row in tqdm.tqdm(test_df.iterrows(), total=len(test_df)):
