@@ -9,6 +9,7 @@ from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.layers import UpSampling2D, Conv2D
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import save_model
 from PIL import Image
 
 import matplotlib.pyplot as plt
@@ -32,6 +33,7 @@ class GAN():
         self.train_dir = os.path.join(BASE_DIR, 'inputs/crops/train_crops')
         self.n_train = 4000
         self.label = 'Fish'
+        self.synthetic_csv = os.path.join(BASE_DIR, 'inputs/crops/synthetic_crops_{}.csv'.format(self.label))
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -105,13 +107,15 @@ class GAN():
         # Load the dataset
         X_train = np.empty((self.n_train, self.img_shape[0], self.img_shape[1], self.channels))
         train_df = pd.read_csv(self.train_csv, skipinitialspace=True)
+        cnt = 0
         for i in range(len(train_df)):
-            if i == self.n_train: break
+            if cnt == self.n_train: break
             label = train_df.iloc[i]['Label']
             if label != self.label: continue
             img = Image.open(os.path.join(self.train_dir, train_df.iloc[i]['Image']))
             arr = np.array(img)
-            X_train[i] = arr
+            X_train[cnt] = arr
+            cnt += 1
 
         # Rescale -1 to 1
         X_train = X_train / 127.5 - 1.
@@ -130,6 +134,8 @@ class GAN():
             # Select a random batch of images
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             imgs = X_train[idx]
+            # self.plot_samples(imgs)
+            # exit()
 
             noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
 
@@ -156,13 +162,17 @@ class GAN():
             # If at save interval => save generated image samples
             if epoch % sample_interval == 0:
                 self.sample_images(epoch)
+                save_model(self.combined, 'models/gan_{}_{}.h5'.format(self.label, epoch), save_format='h5')
+
+            if (epoch + 1) == epochs:
+                self.save_samples()
 
     def sample_images(self, epoch):
         r, c = 5, 5
         noise = np.random.normal(0, 1, (r * c, self.latent_dim))
         gen_imgs = self.generator.predict(noise)
 
-        # Rescale images 0 - 255
+        # Rescale images 0 - 1
         gen_imgs = 0.5 * gen_imgs + 0.5
 
         fig, axs = plt.subplots(r, c)
@@ -172,10 +182,43 @@ class GAN():
                 axs[i,j].imshow(gen_imgs[cnt])
                 axs[i,j].axis('off')
                 cnt += 1
-        fig.savefig("images/{}_{}.png".format(label, epoch))
+        fig.savefig("images/{}_{}.png".format(self.label, epoch))
         plt.close()
+
+    def save_samples(self):
+        num_samples = 1000
+        noise = np.random.normal(0, 1, (num_samples, self.latent_dim))
+        gen_imgs = self.generator.predict(noise)
+
+        # Rescale images 0 - 1
+        gen_imgs = 0.5 * gen_imgs + 0.5
+        gen_imgs = (255 * gen_imgs).astype(np.uint8)
+        outdir = 'inputs/crops/synthetic_crops/'
+        os.makedirs(outdir, exist_ok=True)
+
+        with open(self.synthetic_csv, 'a') as file:
+            for i in range(num_samples):
+                filename = '{}_{}.jpg'.format(self.label, i)
+                file.write('{},{}\n'.format(filename, self.label))
+                out_path = os.path.join(outdir, filename)
+                Image.fromarray(gen_imgs[i]).save(out_path)
+
+    def plot_samples(self, imgs):
+        r, c = 5, 5
+        # Rescale images 0 - 1
+        gen_imgs = 0.5 * imgs + 0.5
+
+        fig, axs = plt.subplots(r, c)
+        cnt = 0
+        for i in range(r):
+            for j in range(c):
+                axs[i,j].imshow(gen_imgs[cnt])
+                axs[i,j].axis('off')
+                cnt += 1
+        plt.show()
 
 if __name__ == '__main__':
     os.makedirs('images/', exist_ok=True)
+    os.makedirs('models/', exist_ok=True)
     gan = GAN()
-    gan.train(epochs=30000, batch_size=32, sample_interval=200)
+    gan.train(epochs=2000, batch_size=32, sample_interval=200)
