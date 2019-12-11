@@ -30,9 +30,9 @@ class GAN():
 
         BASE_DIR = os.path.dirname((os.path.dirname(__file__)))
         self.train_csv = os.path.join(BASE_DIR, 'inputs/crops/train_crops.csv')
-        self.train_dir = os.path.join(BASE_DIR, 'inputs/crops/train_crops')
+        self.train_dir = os.path.join(BASE_DIR, 'inputs/crops/train_crops/')
         self.n_train = 4000
-        self.label = 'Fish'
+        self.label = 'Gravel'
         self.synthetic_csv = os.path.join(BASE_DIR, 'inputs/crops/synthetic_crops_{}.csv'.format(self.label))
 
         optimizer = Adam(0.0002, 0.5)
@@ -113,7 +113,7 @@ class GAN():
             label = train_df.iloc[i]['Label']
             if label != self.label: continue
             img_path = os.path.join(self.train_dir, train_df.iloc[i]['Image'])
-            if !os.path.exists(img_path): continue
+            if not os.path.exists(img_path): continue
             img = Image.open(img_path)
             arr = np.array(img)
             X_train[cnt] = arr
